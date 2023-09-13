@@ -5,15 +5,6 @@
 
 Welcome to the MIS Multi-Integrated Monitoring & Ticketing System repository for STI College Calamba. This comprehensive system is designed to streamline and enhance various aspects of monitoring and ticketing processes within the educational institution.
 
-## Table of Contents
-
-- [About the Project](#about-the-project)
-- [Key Features](#key-features)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## About the Project
 
 The MIS Multi-Integrated Monitoring & Ticketing System is a collaborative effort between STI College Calamba and Digital Resolve Engineering & Software Innovation Group. It combines the power of Electron, a framework for building cross-platform desktop applications, and React TypeScript, a popular front-end library, to provide a robust and user-friendly solution for monitoring and ticketing.
@@ -35,4 +26,4 @@ To get started with the MIS Multi-Integrated Monitoring & Ticketing System, foll
 
 1. **Clone the Repository:** 
    ```sh
-   git clone [repository_url]
+   git clone https://github.com/Modern-Resolve-Developers/STI-Calamba-MIS-ComponentHub.git
