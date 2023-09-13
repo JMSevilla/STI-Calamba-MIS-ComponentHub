@@ -1,0 +1,4 @@
+node_modules
+sti_monitoring_system/build/
+sti_monitoring_system/node_modules/
+dist
