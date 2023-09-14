@@ -12,6 +12,8 @@ import './components/PasswordStrengthMeter/PasswordStrengthMeter.css'
 import { QueryClient, QueryClientProvider } from "react-query";
 import ToastProvider from './core/context/ToastContext';
 import { GlobalProvider } from './core/context/GlobalContext';
+import { LoadingProvider } from './core/context/LoadingContext';
+import { AuthenticationProvider } from './core/context/AuthContext';
 import ControlledToast from './components/Toast/Toastify';
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -21,24 +23,26 @@ const queryClient = new QueryClient({});
 root.render(
   <HashRouter>
     <QueryClientProvider client={queryClient}>
-    <ToastProvider>
-      <GlobalProvider>
-        
-        <ControlledToast
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
-          <Initialization />
-        
-      </GlobalProvider>
+      <ToastProvider>
+          <LoadingProvider>
+            <AuthenticationProvider>
+              <GlobalProvider>
+                <ControlledToast
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                />
+                  <Initialization />
+              </GlobalProvider>
+            </AuthenticationProvider>
+          </LoadingProvider>
       </ToastProvider>
     </QueryClientProvider>
   </HashRouter>

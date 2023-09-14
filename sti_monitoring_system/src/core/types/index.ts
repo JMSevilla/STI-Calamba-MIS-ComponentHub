@@ -50,3 +50,20 @@ export const cooldownsToBeMigrated: CooldownsEntity = {
     resendCount: 3,
     cooldown: 5000
 }
+
+export type LoginProps = {
+    username: string
+    password: string
+}
+
+export type ResponseReferencesTypes = {
+    id: number
+    access_level: number
+    firstname: string
+    middlename: string | undefined
+    lastname: string
+    mobile_number: string
+    section: number
+    username: string
+    imgurl: string
+}

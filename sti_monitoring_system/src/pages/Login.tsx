@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Typography } from "@mui/material";
 import { LoginSchema, loginToAtom } from '../core/schema/login';
 import { loginAtom } from '../core/atoms/login-atom';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useAtom } from 'jotai'
 import { ControlledTextField } from '../components';
 import LoadBackdrop from '../components/Backdrop/Backdrop';
@@ -12,27 +12,34 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Path } from '../router/path';
 import { workWithCoolDowns } from '../core/utils/migration';
+import { useAuthContext } from '../core/context/AuthContext';
+import { useLoaders } from '../core/context/LoadingContext';
+import { useAccessToken, useRefreshToken } from '../core/hooks/useStore';
 
 
 export const Login: React.FC = () => {
-    const [login, setLogin] = useAtom(loginAtom)
+    const [loginDetails, setLoginDetails] = useAtom(loginAtom)
     const [load, setLoad] = useState<Boolean>(true)
     const loadAccountSetup = useApiCallback(api => api.internal.AccountSetupFindAnyUsers())
-    const [processLoad, setProcessLoad] = useState<Boolean>(false)
+    
     const imageStyle: React.CSSProperties = {
         display: 'block', // This makes the image behave like a block element
         margin: '0 auto', // This centers the image horizontally
     };
+    const { login } = useAuthContext()
+    const { loading, setLoading } = useLoaders()
     const navigate = useNavigate()
+    const form = useForm<loginToAtom>({
+        mode: 'all',
+        resolver: zodResolver(LoginSchema),
+        defaultValues: loginDetails
+    })
     const {
         getValues,
         control,
-        formState: { isValid }
-    } = useForm<loginToAtom>({
-        mode: 'all',
-        resolver: zodResolver(LoginSchema),
-        defaultValues: login
-    })
+        formState: { isValid },
+        handleSubmit
+    } = form;
     const enterKeyTrigger = (event: KeyboardEvent<HTMLInputElement>) => {
         const value = getValues();
         if (event.key === 'Enter') {
@@ -60,6 +67,14 @@ export const Login: React.FC = () => {
             }
         }
     }
+    const handleSignIn = () => {
+        handleSubmit(
+            (values) => {
+                login(values.username, values.password)
+            }
+        )()
+        return false;
+    }
     useEffect(() => {
         LoadAccountSetup()
         // preloadedCooldowns()
@@ -69,7 +84,8 @@ export const Login: React.FC = () => {
             {load ? (
                 <LoadBackdrop open={load} />
             ) : (
-                <div className='min-h-screen top-0 left-0 bg-gradient-to-t from-[#b7497e] to-[#f7d48c]'>
+                <FormProvider {...form}>
+                    <div className='min-h-screen top-0 left-0 bg-gradient-to-t from-[#b7497e] to-[#f7d48c]'>
                     <div className='w-full lg:max-w-screen space-y-8'>
                         <div className='container mx-auto py-24 sm:py-20 md:py-20 lg:py-[4rem]'>
                             <div className='flex justify-center items-center'>
@@ -100,7 +116,7 @@ export const Login: React.FC = () => {
                                                 <label
                                                     htmlFor="label"
                                                     className="text-[#808080] text-[15px]  ">
-                                                    Email
+                                                    Username
                                                 </label>
                                             </div>
                                             <ControlledTextField 
@@ -151,6 +167,7 @@ export const Login: React.FC = () => {
                                         <div>
                                             <button
                                             disabled={!isValid}
+                                            onClick={handleSignIn}
                                             className="group relative flex w-full px-6 mt-5 justify-center rounded-md border border-transparent bg-[#8B255B] py-2 text-sm font-medium text-white hover:bg-[#e152a8] focus:outline-none focus:ring-2 focus:ring-[#8B255B] cus:ring-offset-2"
                                             >Sign in</button>
                                             
@@ -161,8 +178,9 @@ export const Login: React.FC = () => {
                         </div>
                     </div>
                 </div>
+                </FormProvider>
             )}
-            <LoadBackdrop open={processLoad} />
+            <LoadBackdrop open={loading} />
        </>
     )
 }
