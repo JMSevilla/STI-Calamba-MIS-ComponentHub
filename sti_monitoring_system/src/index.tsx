@@ -15,6 +15,10 @@ import { GlobalProvider } from './core/context/GlobalContext';
 import { LoadingProvider } from './core/context/LoadingContext';
 import { AuthenticationProvider } from './core/context/AuthContext';
 import ControlledToast from './components/Toast/Toastify';
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -22,6 +26,7 @@ const queryClient = new QueryClient({});
 
 root.render(
   <HashRouter>
+    <LocalizationProvider dateAdapter={AdapterMoment}>
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
           <LoadingProvider>
@@ -45,6 +50,7 @@ root.render(
           </LoadingProvider>
       </ToastProvider>
     </QueryClientProvider>
+    </LocalizationProvider>
   </HashRouter>
 )
 reportWebVitals();

@@ -62,7 +62,18 @@ body {
   }
   
   /* third-party libraries CSS */
-  
+  input.css-hh0z88-input {
+    display: none !important;
+  }
+  .premeeting-screen .premeeting-name-input .prejoin-input-area input.field {
+    display: none;
+  } 
+  #premeeting-name-input {
+    display: none !important;
+  }
+  .css-hh0z88-input {
+    display: none !important;
+  }
   .tableCheckbox:checked ~ div span {
     @apply opacity-100;
   }

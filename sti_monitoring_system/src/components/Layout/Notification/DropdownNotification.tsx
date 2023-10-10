@@ -1,12 +1,40 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
+import { useApiCallback } from '../../../core/hooks/useApi';
+import { useAdaptiveTicketId, useAdaptiveWithPushNotification, useReferences } from '../../../core/hooks/useStore';
+import moment from 'moment';
+import { useNavigate } from 'react-router-dom';
+import routes from '../../../router/path';
+import { useAdaptiveNotification } from '../../../core/hooks/useAdaptiveNotification';
 
 export const DropdownNotification = () => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-
+    const [notifications, setNotifications] = useState([])
+    const [references, setReferences] = useReferences()
+    const navigate = useNavigate()
     const trigger = useRef<any>(null);
     const dropdown = useRef<any>(null);
-
+    const apiFetchedNotifications = useApiCallback(
+        api => api.internal.fetchedNotifs()
+    )
+    const apiFetchedNotificationsInProgressOrCompleted = useApiCallback(
+        api => api.internal.fetchedInprogressOrCompletedNotifs()
+    )
+    const [TID, setTID] = useAdaptiveTicketId()
+    const [NTF, setNTF] = useAdaptiveWithPushNotification()
+    useEffect(() => {
+        if(references?.access_level === 1){
+            apiFetchedNotifications.execute()
+            .then(res => {
+                setNotifications(res.data)
+            })
+        } else if(references?.access_level == 2){
+            apiFetchedNotificationsInProgressOrCompleted.execute()
+            .then(res => {
+                setNotifications(res.data)
+            })
+        }
+    }, [])
     useEffect(() => {
         const clickHandler = ({ target }: MouseEvent) => {
         if (!dropdown.current) return;
@@ -22,7 +50,6 @@ export const DropdownNotification = () => {
         return () => document.removeEventListener('click', clickHandler);
     });
 
-    
     useEffect(() => {
         const keyHandler = ({ keyCode }: KeyboardEvent) => {
         if (!dropdownOpen || keyCode !== 27) return;
@@ -31,18 +58,34 @@ export const DropdownNotification = () => {
         document.addEventListener('keydown', keyHandler);
         return () => document.removeEventListener('keydown', keyHandler);
     });
-
+    const handleSelectedNotification = (ticketId: string, isNotification: boolean) => {
+        setTID(ticketId)
+        setNTF(isNotification)
+        const findRoute: any = routes.find((item) => item.access === references?.access_level && item.path.includes('/dashboard/admin/ticket-details'))?.path
+        navigate(findRoute)
+        setDropdownOpen(false)
+    }
     return (
-        <li className='relative'>
+        <>
+            {references?.access_level !== 3 &&
+            <li className='relative'>
             <Link
             ref={trigger}
             onClick={() => setDropdownOpen(!dropdownOpen)}
             to='#'
             className="relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px] border-stroke bg-gray hover:text-primary dark:border-strokedark dark:bg-meta-4 dark:text-white"
             >
-                <span className="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1">
+                {
+                    references?.access_level === 1 && notifications.length > 0 ? (
+                        <span className="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1">
                     <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
                 </span>
+                    ) : references?.access_level === 2 && notifications.length > 0 && (
+                        <span className="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1">
+                    <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
+                </span>
+                    )
+                }
                 <svg
                     className="fill-current duration-300 ease-in-out"
                     width="18"
@@ -65,9 +108,85 @@ export const DropdownNotification = () => {
             }`}
             >
                 <div className="px-4.5 py-3">
-                 <h5 className="text-sm font-medium text-bodydark2">Notification</h5>
+                 <h5 className="text-sm font-medium text-bodydark2">Notifications</h5>
                 </div>
+                <ul className="flex h-auto flex-col overflow-y-auto">
+                    {
+                        references?.access_level === 1 && notifications.length > 0 
+                        ? notifications.map((item: any) => (
+                            <li>
+                                <div
+                                className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
+                                style={{
+                                    cursor: references.access_level == 1 ? 'pointer' : 'default'
+                                }}
+                                onClick={() => {
+                                    if(references.access_level == 1){
+                                        handleSelectedNotification(item.id, true)
+                                    } else {
+                                        return;
+                                    }
+                                }}
+                                >
+                                    <p className="text-sm">
+                                        <span className="text-black dark:text-white">
+                                            <span style={{ fontWeight: 'bold'}}>{item.ticketId}</span>
+                                            {' '}{item.ticketSubject}
+                                        </span>{' '}
+                                        {item.issueStatuses === 0
+                                         && 'Ticket has been created by'} {' '} {item.accounts.firstname + ' ' + item.accounts.lastname}
+                                    </p>
+
+                                    <p className="text-xs">
+                                        {moment(item.created_at).calendar()}
+                                    </p>
+                                </div>
+                            </li>
+                        ))
+                        : references?.access_level === 2 && notifications.length > 0
+                         ? notifications.map((item: any) => (
+                            <li>
+                                <div
+                                className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
+                                style={{
+                                    cursor: references.access_level == 1 ? 'pointer' : 'default'
+                                }}
+                                onClick={() => {
+                                    if(references.access_level == 1){
+                                        handleSelectedNotification(item.id, true)
+                                    } else {
+                                        return;
+                                    }
+                                }}
+                                >
+                                    <p className="text-sm">
+                                        <span className="text-black dark:text-white">
+                                            <span style={{ fontWeight: 'bold'}}>{item.ticketId}</span>
+                                            {' '}{item.ticketSubject}
+                                        </span>{' '}
+                                        {item.issueStatuses === 1 ? 'ticket has been moved to in-progress' : item.issueStatuses === 2 && 'ticket has been moved to completed'} {' '}
+                                    </p>
+
+                                    <p className="text-xs">
+                                        {moment(item.created_at).calendar()}
+                                    </p>
+                                </div>
+                            </li>
+                        )) : (
+                            <>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center'
+                                }}>
+                                    <span>No notification found</span>
+                                </div>
+                            </>
+                        )
+                    }
+                </ul>
             </div>
-        </li>
+        </li>}
+        </>
     )
 }

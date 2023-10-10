@@ -5,6 +5,8 @@ type Props = {
     setLoading: (isLoading: boolean) => void
     preload: boolean
     setPreLoad: (isLoading: boolean) => void
+    gridLoad: boolean
+    setGridLoad: (gridLoad: boolean) => void
 }
 
 const LoadingContext = createContext<Props>(undefined as any)
@@ -14,13 +16,16 @@ export const LoadingProvider: React.FC<React.PropsWithChildren<{}>> = ({
 }) => {
     const [loading, setLoading] = useState<boolean>(false)
     const [preload, setPreLoad] = useState<boolean>(true)
+    const [gridLoad, setGridLoad] = useState<boolean>(true)
     return (
         <LoadingContext.Provider
         value={{
             loading,
             setLoading,
             preload,
-            setPreLoad
+            setPreLoad,
+            gridLoad,
+            setGridLoad
         }}
         >{children}</LoadingContext.Provider>
     )

@@ -6,6 +6,7 @@ import { getItem } from "../local-storage";
 import { config } from "../config";
 import { useAsyncCallback } from "react-async-hook";
 import { AxiosInstance } from "axios";
+
 const HTTP_OPTIONS: HttpOptions = {
     headers: {
         "Content-Type": "application/json",
@@ -24,7 +25,7 @@ export const useApiCallback = <R, A extends unknown>(asyncFn: (api: Api, args: A
         try {
             return await asyncFn(produceApi(httpClient.client), args as A)
         } catch (error) {
-            console.log(error)
+            throw error
         }
     })
 

@@ -1,25 +1,52 @@
-import React, { Suspense, lazy, useEffect, useState, startTransition } from 'react'
+import React, { useEffect } from 'react'
 import {
     Navigate,
-    Route, Routes, useNavigate
+    Route, Routes, useLocation, useNavigate
 } from 'react-router-dom'
 import { Login, AccountSetup, OtpEntryPage } from '../pages'
 import { Path } from './path'
-
+import DashboardOverview from '../pages/administrator/Overview'
 import routes from './path'
 import DashboardLayout from '../components/Layout/DashboardLayout'
-import { useAccessToken } from '../core/hooks/useStore'
+import { useAccessToken, useReferences, useRefreshToken } from '../core/hooks/useStore'
+import AddNewModerator from '../pages/administrator/uam/add-moderator'
+import { httpClient, useApiCallback } from '../core/hooks/useApi'
+import { useAuthContext } from '../core/context/AuthContext'
+import { useRefreshTokenHandler } from '../core/hooks/useRefreshTokenHandler'
+import { ApplicationSettings } from '../core/utils/settings-migration'
+import UnauthorizedPage from '../pages/unauthorized-page'
+import ForgotPassword from '../pages/forgot-password'
+
+
 
 function App() {
     const [accessToken, setAccessToken] = useAccessToken()
+    const [refreshToken, setRefreshToken] = useRefreshToken()
+    const [references, setReferences] = useReferences()
+    const loadAccountSetup = useApiCallback(api => api.internal.AccountSetupFindAnyUsers())
+    const apiMigrateAppSettings = useApiCallback(
+        async (api, args: { roomSettings: string }) =>
+        await api.internal.initializedSettings(args)
+    )
+    const { logout } = useAuthContext()
+    
+    
     const navigate = useNavigate()
     useEffect(() => {
-        if(!accessToken){
-            navigate(Path.login.path)
-        } else {
-            navigate(Path.dashboard.path)
-        }
-    }, [accessToken, navigate])
+        apiMigrateAppSettings.execute({ roomSettings: JSON.stringify(ApplicationSettings)})
+        loadAccountSetup.execute().then(res => {
+            if(res?.data){
+                if(!accessToken || accessToken == undefined){
+                    if(!Path.forgot_password.path || !Path.accountsetup.path
+                        ){
+                            logout()
+                        }
+                }
+            }
+        })
+    }, [accessToken, refreshToken, navigate])
+    const hasAccess = (access: number) => references?.access_level === access;
+    
     return (
         <>
             <Routes>
@@ -32,20 +59,59 @@ function App() {
                         element={<OtpEntryPage />}
                     />
                     <Route 
-                        index
                         path={Path.login.path}
                         element={<Login />}
                     />
-                    <Route path={Path.dashboard.path} element={<DashboardLayout />}>
-                        {routes.map(( { path, component: Component }) => (
-                            <Route 
-                                path={path}
-                                element={
-                                    <Component />
-                                }
-                            />
-                        ))}
+                    <Route 
+                        path={Path.unauthorized.path}
+                        element={<UnauthorizedPage />}
+                    />
+                    <Route 
+                        path={Path.forgot_password.path}
+                        element={<ForgotPassword />}
+                    />
+                   {
+                    accessToken && 
+                    <Route element={<DashboardLayout />}>
+                        {
+                            <>
+                                {routes.map(( { path, component: Component, customSubs, hasSubMenus, access }, index) => (
+                                    <>
+                                       {hasAccess(access) ? 
+                                       <>
+                                       <Route 
+                                            key={path}
+                                            path={path}
+                                            element={<Component />}
+                                            />
+                                            {
+                                                hasSubMenus
+                                                &&
+                                                <>
+                                                    {
+                                                        customSubs.length > 0 && customSubs.map((j: any, i: any) => (
+                                                            <>
+                                                                <Route 
+                                                                    key={i}
+                                                                    path={j.path}
+                                                                    
+                                                                    element={
+                                                                        <j.component />
+                                                                    }
+                                                                />
+                                                            </>
+                                                        ))
+                                                    }
+                                                </>
+                                                
+                                            }
+                                       </>: null}
+                                    </>
+                                ))}
+                            </>
+                        }
                     </Route>
+                   }
             </Routes>
         </>
     )
