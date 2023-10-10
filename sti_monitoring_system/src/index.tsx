@@ -12,7 +12,13 @@ import './components/PasswordStrengthMeter/PasswordStrengthMeter.css'
 import { QueryClient, QueryClientProvider } from "react-query";
 import ToastProvider from './core/context/ToastContext';
 import { GlobalProvider } from './core/context/GlobalContext';
+import { LoadingProvider } from './core/context/LoadingContext';
+import { AuthenticationProvider } from './core/context/AuthContext';
 import ControlledToast from './components/Toast/Toastify';
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -20,27 +26,31 @@ const queryClient = new QueryClient({});
 
 root.render(
   <HashRouter>
+    <LocalizationProvider dateAdapter={AdapterMoment}>
     <QueryClientProvider client={queryClient}>
-    <ToastProvider>
-      <GlobalProvider>
-        
-        <ControlledToast
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
-          <Initialization />
-        
-      </GlobalProvider>
+      <ToastProvider>
+          <LoadingProvider>
+            <AuthenticationProvider>
+              <GlobalProvider>
+                <ControlledToast
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                />
+                  <Initialization />
+              </GlobalProvider>
+            </AuthenticationProvider>
+          </LoadingProvider>
       </ToastProvider>
     </QueryClientProvider>
+    </LocalizationProvider>
   </HashRouter>
 )
 reportWebVitals();

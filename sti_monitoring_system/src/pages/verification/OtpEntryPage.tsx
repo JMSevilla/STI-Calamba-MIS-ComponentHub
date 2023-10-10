@@ -16,11 +16,20 @@ import { AccountSetupProps } from '../../core/types'
 import { useMutation } from 'react-query'
 import { useApiCallback } from '../../core/hooks/useApi'
 import { AxiosResponse } from 'axios'
+import { useAuthContext } from '../../core/context/AuthContext'
+import { reusable_otp_page_identifier } from '../../core/atoms/globals-atom'
+import { useAccessToken, useReferences } from '../../core/hooks/useStore'
+import { AlertMessagePlacement } from '../../core/utils/alert-placement'
+import { TwoFA } from '../../icons/TwoFA'
+import { useMemoizedPassword } from '../../core/hooks/useMemoizedPassword'
 export const OtpEntryPage: React.FC = () => {
+    const [accessToken, setAccessToken] = useAccessToken()
+    const [reuseOtp, setReuseOtp] = useAtom(reusable_otp_page_identifier)
     const [otpAtom, setOtpAtom] = useAtom(OtpAtom)
     const [accountDetails, setAccountDetails] = useAtom(AccountSetupAtom)
+    const [references, setReferences] = useReferences()
     const navigate = useNavigate()
-    const [loading, setLoading] = useState<Boolean>(false)
+    const [loading, setLoading] = useState<Boolean>(true)
     const [preload, setPreLoad] = useState<Boolean>(false)
     const form = useForm<OtpType>({
         mode: 'all',
@@ -39,26 +48,48 @@ export const OtpEntryPage: React.FC = () => {
     )
     const { ToastMessage } = useToastMessage()
     const { resendCheckCounts, handleResendNewCode } = useGlobalContext()
+    const { login, logout, savedPassword } = useAuthContext()
     const {
         control, getValues, formState: { isValid },
         handleSubmit, reset
     } = form
+    const {
+        password
+    } = useMemoizedPassword()
     useEffect(() => {
-        setTimeout(() => {
-            if(!accountDetails){
-                setLoading(false)
-                navigate(Path.login.path)
-            } else {
-                setLoading(false)
-            }
-        }, 2000)
+        if(reuseOtp?.currentScreen === 'ac_setup'){
+            setTimeout(() => {
+                if(!accountDetails){
+                    setLoading(false)
+                    navigate(Path.login.path)
+                } else {
+                    setLoading(false)
+                }
+            }, 2000)
+        } else {
+            setTimeout(() => {
+                if(!accessToken){
+                    setLoading(false)
+                    navigate(Path.login.path)
+                } else {
+                    setLoading(false)
+                }
+            }, 2000)
+        }
     }, [])
     useEffect(() => {
-        resendCheckCounts(accountDetails?.email)
+        resendCheckCounts(
+            reuseOtp?.currentScreen === 'ac_setup'
+            ? accountDetails?.email
+            : references?.email
+        )
     }, [])
     const resendNewCode = () => {
         setPreLoad(!preload)
-        handleResendNewCode("email", accountDetails?.email)
+        handleResendNewCode("email", 
+        reuseOtp?.currentScreen === 'ac_setup'
+        ? accountDetails?.email
+        : references?.email)
         setTimeout(() => setPreLoad(false), 3000)
     }
     const useAccountCreation = () => {
@@ -72,49 +103,53 @@ export const OtpEntryPage: React.FC = () => {
         setPreLoad(!preload)
                 apiCodeEntry.execute({
                     code: parseInt(values.code),
-                    email: accountDetails?.email,
+                    email: reuseOtp?.currentScreen === 'ac_setup' ? accountDetails?.email : references?.email,
                     type: 'account_activation'
                 }).then((res: AxiosResponse | undefined) => {
                     if(res?.data == 200) {
-                        const obj: AccountSetupProps = {
-                            email: accountDetails?.email,
-                            username: accountDetails?.username,
-                            password: accountDetails?.password,
-                            firstname: accountDetails?.firstName,
-                            middlename: accountDetails?.hasNoMiddleName ? "N/A" : accountDetails?.middleName,
-                            lastname: accountDetails?.lastName,
-                            mobileNumber: accountDetails?.mobileNumber,
-                            imgurl: 'no-image-attached',
-                            status: 1,
-                            verified: 0,
-                            access_level: 1,
-                            section: 0
-                        }
-                        mutate(obj, {
-                            onSuccess: (res: any) => {
-                                if(res?.data == 200){
-                                    
-                                    setPreLoad(false)
-                                } else {
-                                    ToastMessage(
-                                        "Something went wrong.",
-                                        "top-right",
-                                        false,
-                                        true,
-                                        true,
-                                        true,
-                                        undefined,
-                                        "dark",
-                                        "error"
-                                    )
+                        if(reuseOtp?.currentScreen === 'ac_setup'){
+                            const obj: AccountSetupProps = {
+                                email: accountDetails?.email,
+                                username: accountDetails?.username,
+                                password: accountDetails?.password,
+                                firstname: accountDetails?.firstName,
+                                middlename: accountDetails?.hasNoMiddleName ? "N/A" : accountDetails?.middleName,
+                                lastname: accountDetails?.lastName,
+                                mobileNumber: accountDetails?.mobileNumber,
+                                imgurl: 'no-image-attached',
+                                status: 1,
+                                verified: 0,
+                                access_level: 1,
+                                section: 0
+                            }
+                            mutate(obj, {
+                                onSuccess: (res: any) => {
+                                    if(res?.data == 200){
+                                        setPreLoad(false)
+                                        login(obj.username, obj.password)
+                                    } else {
+                                        ToastMessage(
+                                            "Something went wrong.",
+                                            "top-right",
+                                            false,
+                                            true,
+                                            true,
+                                            true,
+                                            undefined,
+                                            "dark",
+                                            "error"
+                                        )
+                                        setPreLoad(false)
+                                    }
+                                },
+                                onError: (err) => {
+                                    console.log(err)
                                     setPreLoad(false)
                                 }
-                            },
-                            onError: (err) => {
-                                console.log(err)
-                                setPreLoad(false)
-                            }
-                        })
+                            })
+                        } else {
+                            login(references?.username, savedPassword)
+                        }
                     } else {
                         setPreLoad(false)
                         ToastMessage(
@@ -154,8 +189,26 @@ export const OtpEntryPage: React.FC = () => {
                                         alignItems: 'center',
                                         marginTop: '50px'
                                     }}>
-                                        <Typography fontWeight='bold' variant='h5'>Please check your email</Typography>
+                                        <Typography fontWeight='bold' variant='h5'>
+                                            {
+                                                reuseOtp?.currentScreen === 'ac_setup' ?
+                                                "Please check your email"
+                                                : "Account Security Check"
+                                            }
+                                        </Typography>
                                     </div>
+                                    {
+                                        reuseOtp?.currentScreen !== 'ac_setup' &&
+                                        <div>
+                                            {
+                                                AlertMessagePlacement({
+                                                    type: 'info',
+                                                    title: 'Friendly Reminder',
+                                                    message: "Account Security Check: Verify your account with a one-time password (OTP) for added protection."
+                                                })
+                                            }
+                                        </div>
+                                    }
                                     <div
                                         style={{
                                             display: "flex",
@@ -169,8 +222,15 @@ export const OtpEntryPage: React.FC = () => {
                                                 color: '#808080'
                                             }}
                                             variant="caption">
-                                                We've sent code to <span style={{color: '#A43A38', fontWeight: "bold"}}>
-                                                {accountDetails?.email}
+                                                {
+                                                    reuseOtp?.currentScreen === 'ac_setup'
+                                                    ? "We've sent code to" : "Kindly check the OTP Account Activation sent to"
+                                                } <span style={{color: '#A43A38', fontWeight: "bold"}}>
+                                                {
+                                                    reuseOtp?.currentScreen === 'ac_setup'
+                                                    ? accountDetails?.email :
+                                                    references?.email
+                                                }
                                                 </span>
                                         </Typography>
                                     </div>
@@ -188,6 +248,9 @@ export const OtpEntryPage: React.FC = () => {
                                             required
                                             shouldUnregister
                                             onResend={resendNewCode}
+                                            hideCanResend={
+                                                reuseOtp?.currentScreen === 'ac_setup' ? false : true
+                                            }
                                         />
                                     </div>
                                     <div className='flex justify-center items-center'>
@@ -205,13 +268,7 @@ export const OtpEntryPage: React.FC = () => {
                                     </div>
                                 </Grid>
                                 <Grid item xs={6}>
-                                <img 
-                                    src="/clientreg.png"
-                                    style={{
-                                        width: "80%",
-                                        height: "auto"
-                                    }}
-                                />
+                                <TwoFA />
                                 </Grid>
                             </Grid>
                         </BaseCard>
