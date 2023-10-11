@@ -6,7 +6,7 @@ import { useApiCallback } from "../../../core/hooks/useApi";
 import { useLoaders } from "../../../core/context/LoadingContext";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "react-query";
-import { Button, Chip, Grid, Skeleton, Typography } from "@mui/material";
+import { Avatar, Button, Chip, Grid, Skeleton, Typography } from "@mui/material";
 import moment from "moment";
 import BasicSelectField from "../../../components/SelectField/BasicSelectField";
 import LoadBackdrop from "../../../components/Backdrop/Backdrop";
@@ -15,6 +15,7 @@ import { useToastMessage } from "../../../core/context/ToastContext";
 import { NormalButton } from "../../../components/Buttons/NormalButton";
 import ControlledModal from "../../../components/Modal/Modal";
 import routes from "../../../router/path";
+import { useAvatarConfiguration } from "../../../core/hooks/useAvatarConfiguration";
 
 const TicketDetails: React.FC = () => {
     const navigate = useNavigate()
@@ -28,6 +29,8 @@ const TicketDetails: React.FC = () => {
     const [deleteModal, setDeleteModal] = useState(false)
     const [ticketId, setTicketId] = useState<string | undefined>(undefined)
     const { ToastMessage } = useToastMessage()
+    const { stringToColor,
+        stringAvatarColumns, stringAvatarTicketDetails } = useAvatarConfiguration()
     const apiAssignToMe = useApiCallback(
         async (api, args: { ticketId: string, id: number | undefined }) =>
         await api.internal.assignToMe(args)
@@ -347,7 +350,17 @@ const TicketDetails: React.FC = () => {
                                     size='small'
                                     onClick={() => handleAssignToMe(item.id)}
                                     >Assign to me</Button>
-                                ) : currentAssignee
+                                ) : (
+                                    <>
+                                    {
+                                references?.imgurl === 'no-image' ? 
+                                <Avatar {...stringAvatarTicketDetails(references?.firstname + " " + references?.lastname)} />
+                                :
+                                <Avatar sx={{ width: 30, height: 30 }} src={references?.imgurl} />
+                            } &nbsp;
+                            {currentAssignee}
+                                    </>
+                                )
                             }
                         </div>
                         <Typography sx={{ mr: 1}} gutterBottom
@@ -362,6 +375,12 @@ const TicketDetails: React.FC = () => {
                             display: 'flex',
                             marginBottom: '10px'
                         }}>
+                            {
+                                item.imgurl === 'no-image' ? 
+                                <Avatar {...stringAvatarTicketDetails(item.firstname + " " + item.lastname)} />
+                                :
+                                <Avatar sx={{ width: 30, height: 30 }} src={item.imgurl} />
+                            } &nbsp;
                             {item.requester}
                         </div>
                         <Typography sx={{ mr: 1}} gutterBottom
@@ -376,6 +395,12 @@ const TicketDetails: React.FC = () => {
                             display: 'flex',
                             marginBottom: '10px'
                         }}>
+                            {
+                                item.accounts.imgurl === 'no-image' ? 
+                                <Avatar {...stringAvatarTicketDetails(item.accounts.firstname + " " + item.accounts.lastname)} />
+                                :
+                                <Avatar sx={{ width: 30, height: 30 }} src={item.accounts.imgurl} />
+                            } &nbsp;
                             {item.accounts.firstname + ' ' + item.accounts.lastname}
                         </div>
                         <Typography gutterBottom variant='button'>

@@ -25,7 +25,7 @@ import { useMutation, useQuery } from 'react-query'
 import { AxiosError, AxiosResponse } from 'axios'
 import { useToastMessage } from '../../core/context/ToastContext'
 import { ControlledTabs } from '../../components/Tabs/Tabs'
-import { Typography, IconButton } from '@mui/material'
+import { Typography, IconButton, Button, Tooltip } from '@mui/material'
 import { ProjectTable } from '../../components/DataGrid/ProjectTable'
 import TimeRangePicker from '@wojtekmaj/react-timerange-picker';
 // icons
@@ -38,6 +38,10 @@ import ControlledModal from '../../components/Modal/Modal'
 import { StudentCreation, studentSubSchema } from '../../core/schema/student'
 import { StudentAtom } from '../../core/atoms/account-setup-atom'
 import { DateRangePicker } from 'react-date-range'
+import { useGenerationPassword } from '../../core/hooks/useGenerationPassword'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import routes from '../../router/path'
+import { useNavigate } from 'react-router-dom'
 const options = {
     dictionary: {
         ...zxcvbnCommonPackage.dictionary,
@@ -47,7 +51,7 @@ const options = {
 zxcvbnOptions.setOptions(options);
 const AddNewStudentForm = () => {
     const {
-        control, getValues, watch, trigger, resetField
+        control, getValues, watch, trigger, resetField, setValue
     } = useFormContext<StudentCreation>()
     const values = getValues()
     const hasNoMiddleName = watch('hasNoMiddleName')
@@ -66,7 +70,12 @@ const AddNewStudentForm = () => {
     ])
     useEffect(() => {}, [streamPassword])
     const result = zxcvbn(values.password == undefined ? "" : values.password);
-
+    function GenPass(){
+        setValue('password', useGenerationPassword(12))
+    }
+    useEffect(() => {
+        GenPass()
+    }, [])
     return (
         <div className="p-6.5">
             <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
@@ -146,17 +155,12 @@ const AddNewStudentForm = () => {
                     shouldUnregister
                     name="password"
                     label="Password"
-                    type="password"
+                    disabled
                 />
-                <PasswordStrengthMeter result={result} />
-                <ControlledTextField
-                    control={control}
-                    required
-                    shouldUnregister
-                    name="conpassword"
-                    label="Confirm Password"
-                    type="password"
-                />
+                <div style={{ display: 'flex' }}>
+                    <PasswordStrengthMeter result={result} />
+                    <Button onClick={GenPass} size='small' sx={{ ml: 1 }}>Generate Password</Button>
+                </div>
             </div>
         </div>
     )
@@ -309,6 +313,11 @@ const AddNewStudent = () => {
             }
         })
     }
+    const navigate = useNavigate()
+    function viewProfile(accountId: number) {
+        const findRoute: any = routes.find((route) => route.access === references?.access_level && route.path.includes('/dashboard/moderator/profile-details'))?.path
+        navigate(`${findRoute}?accountid=${accountId}`) 
+    }
     const memoizedDataGrid = useMemo(() => {
         const columns = [
             {
@@ -420,9 +429,11 @@ const AddNewStudent = () => {
                                         <SendIcon />
                                     </IconButton>
                                 }
-                                {/* <IconButton color='error' size='small'>
-                                    <DoNotDisturbIcon />
-                                </IconButton> */}
+                                <Tooltip title='View profile'>
+                                    <IconButton onClick={() => viewProfile(params.row.id)} color='primary' size='small'>
+                                        <AccountCircleIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </div>
                         )
                     }
@@ -510,7 +521,6 @@ const AddNewStudent = () => {
                             )
                             setLoading(false)
                             resetField('password')
-                            resetField('conpassword')
                             resetField('username')
                             resetField('email')
                         } else {

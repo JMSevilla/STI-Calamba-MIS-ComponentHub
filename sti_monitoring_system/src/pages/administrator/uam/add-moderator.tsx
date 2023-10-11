@@ -38,7 +38,10 @@ import ControlledModal from '../../../components/Modal/Modal'
 import { useAvatarConfiguration } from '../../../core/hooks/useAvatarConfiguration'
 import BasicSelectField from '../../../components/SelectField/BasicSelectField'
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import routes from '../../../router/path'
+import { useNavigate } from 'react-router-dom'
+import { useGenerationPassword } from '../../../core/hooks/useGenerationPassword'
 const options = {
     dictionary: {
         ...zxcvbnCommonPackage.dictionary,
@@ -48,7 +51,7 @@ const options = {
 zxcvbnOptions.setOptions(options);
 const AddNewModeratorForm = () => {
     const {
-        control, getValues, watch, trigger, resetField
+        control, getValues, watch, trigger, resetField, setValue
     } = useFormContext<ModeratorCreation>()
     const values = getValues()
     const hasNoMiddleName = watch('hasNoMiddleName')
@@ -65,9 +68,13 @@ const AddNewModeratorForm = () => {
         resetField,
         trigger
     ])
-    useEffect(() => {}, [streamPassword])
+    useEffect(() => {
+        GenPass()
+    }, [])
     const result = zxcvbn(values.password == undefined ? "" : values.password);
-
+    function GenPass(){
+        setValue('password', useGenerationPassword(12))
+    }
     return (
         <div className="p-6.5">
             <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
@@ -147,25 +154,21 @@ const AddNewModeratorForm = () => {
                     shouldUnregister
                     name="password"
                     label="Password"
-                    type="password"
+                    disabled
                 />
+                <div style={{ display: 'flex' }}>
                 <PasswordStrengthMeter result={result} />
-                <ControlledTextField
-                    control={control}
-                    required
-                    shouldUnregister
-                    name="conpassword"
-                    label="Confirm Password"
-                    type="password"
-                />
+                <Button onClick={GenPass} size='small' sx={{ ml: 1 }}>Generate Password</Button>
+                </div>
             </div>
         </div>
     )
 }
 
 const AddNewModerator = () => {
+    const navigate = useNavigate()
     const [moderatorDetails, setModeratorDetails] = useAtom(ModeratorAtom)
-    const [tabsValue, setTabsValue] = useState(1)
+    const [tabsValue, setTabsValue] = useState(0)
     const [references, setReferences] = useReferences()
     const [open, setOpen] = useState<boolean>(false)
     const [accountDeletionId, setAccountDeletionId] = useState<number>(0)
@@ -345,6 +348,10 @@ const AddNewModerator = () => {
             }
         })
     }
+    function viewProfile(accountId: number) {
+        const findRoute: any = routes.find((route) => route.access === references?.access_level && route.path.includes('/dashboard/admin/profile-details'))?.path
+        navigate(`${findRoute}?accountid=${accountId}`) 
+    }
     const memoizedDataGrid = useMemo(() => {
         const columns = [
             {
@@ -492,6 +499,11 @@ const AddNewModerator = () => {
                                         <SendIcon />
                                     </IconButton>
                                 }
+                                <Tooltip title='View profile'>
+                                    <IconButton onClick={() => viewProfile(params.row.id)} color='primary' size='small'>
+                                        <AccountCircleIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </div>
                         )
                     }
@@ -655,9 +667,11 @@ const AddNewModerator = () => {
                                         <SendIcon />
                                     </IconButton>
                                 }
-                                {/* <IconButton color='error' size='small'>
-                                    <DoNotDisturbIcon />
-                                </IconButton> */}
+                               <Tooltip title='View profile'>
+                                    <IconButton onClick={() => viewProfile(params.row.id)} color='primary' size='small'>
+                                        <AccountCircleIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </div>
                         )
                     }
@@ -743,7 +757,6 @@ const AddNewModerator = () => {
                             )
                             setLoading(false)
                             resetField('password')
-                            resetField('conpassword')
                             resetField('username')
                             resetField('email')
                         } else {
@@ -777,14 +790,19 @@ const AddNewModerator = () => {
             apiCourseList.execute().then(res => res.data),
             apiSectionList.execute().then(res => res.data)
         ]).then(res => {
-            const sectionMapping = res[1]?.length > 0 && res[1].map((item: any) => {
-                return {
-                    value: item.id,
-                    label: item.sectionName
-                }
-            })
-            setCourses(res[0])
-            setSections(sectionMapping)
+            if(res[0]?.length <= 0 || res[1]?.length <= 0) {
+                setCourses([])
+                setSections([])
+            } else {
+                const sectionMapping = res[1]?.length > 0 && res[1].map((item: any) => {
+                    return {
+                        value: item.id,
+                        label: item.sectionName
+                    }
+                })
+                setCourses(res[0])
+                setSections(sectionMapping)
+            }
         })
     }
     function handleSelectedSection(value: any){

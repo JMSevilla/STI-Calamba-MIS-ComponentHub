@@ -1,20 +1,24 @@
+import { Button } from "@mui/material"
+import { useReferences } from "../hooks/useStore"
+import { useNavigate } from "react-router-dom"
+import routes from "../../router/path"
 
 type AlertPlacementProps = {
     type: string
     title: string
     message: string
+    button?: React.ReactNode
 }
 
 export const AlertMessagePlacement = ({
     type,
     title = 'Attention needed',
-    message
+    message,
+    button
 }: AlertPlacementProps) => {
-    switch(type){
-        case 'warning':
-            return (
-                <div className="flex w-full border-l-6 border-warning bg-warning bg-opacity-[15%] px-7 py-8 shadow-md dark:bg-[#1B1B24] dark:bg-opacity-30 md:p-9">
-                    <div className="mr-5 flex h-9 w-9 items-center justify-center rounded-lg bg-warning bg-opacity-30">
+    return (
+        <div className="flex w-full border-l-6 border-warning bg-warning bg-opacity-[15%] px-7 py-8 shadow-md dark:bg-[#1B1B24] dark:bg-opacity-30 md:p-9">
+                    <div className={`mr-5 flex h-9 w-9 items-center justify-center rounded-lg bg-${type} bg-opacity-30`}>
                     <svg
                         width="19"
                         height="16"
@@ -35,29 +39,9 @@ export const AlertMessagePlacement = ({
                     <p className="leading-relaxed text-[#D0915C]">
                         {message}
                     </p>
+                    {button}
                     </div>
+                    
                 </div>
-            )
-            case 'info':
-            return (
-                <div className="flex w-full border-l-6 border-info bg-info bg-opacity-[15%] px-7 py-8 shadow-md dark:bg-[#1B1B24] dark:bg-opacity-30 md:p-9">
-                    <div className="mr-5 flex h-9 w-9 items-center justify-center rounded-lg bg-info bg-opacity-30">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-</svg>
-
-                    </div>
-                    <div className="w-full">
-                        <h5 className="mb-3 text-lg font-semibold text-[#2563EB]">
-                            {title}
-                        </h5>
-                        <p className="leading-relaxed text-[#93C5FD]">
-                            {message}
-                        </p>
-                    </div>
-                </div>
-            );
-        default:
-            break;
-    }
+    )
 }

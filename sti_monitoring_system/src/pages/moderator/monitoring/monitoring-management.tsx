@@ -85,6 +85,9 @@ const MonitoringManagement: React.FC = () => {
     const apiJoinedParticipantsLogs = useApiCallback(
         async (api, args: MeetRoomJoinedProps) => await api.internal.joinedParticipantsLogs(args) 
     )
+    const apiRemoveRevokedRoom = useApiCallback(
+        async (api, room_id: string) => await api.internal.removeRoom(room_id)
+    )
     const useCreateRoom = () => {
         return useMutation((data: CreateRoomInfer) => 
             apicreateroom.execute(data)
@@ -107,14 +110,6 @@ const MonitoringManagement: React.FC = () => {
     const handleChangeTabsValue = (event: React.SyntheticEvent, newValue: number) => {
         setTabsValue(newValue)
     }
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-      };
-    
-      const handleClose = () => {
-        setAnchorEl(null);
-      };
-    
       const open = Boolean(anchorEl);
       const id = open ? 'simple-popover' : undefined;
     const { data, refetch } = useQuery({
@@ -373,6 +368,14 @@ const MonitoringManagement: React.FC = () => {
             setRevokeModal(!revokeModal)
             setRevokeId(room_id)
         }
+        function removeMeetingRoom(room_id: string) {
+            apiRemoveRevokedRoom.execute(room_id)
+            .then(res => {
+                if(res.data === 200) {
+                    refetch()
+                }
+            })
+        }
         const columns: any = [
             {
                 field: 'id',
@@ -486,7 +489,7 @@ const MonitoringManagement: React.FC = () => {
                                 variant='contained'
                                 children='REMOVE'
                                 color='error'
-                                onClick={() => {}}
+                                onClick={() => removeMeetingRoom(params.row.id)}
                                 style={{
                                     display: references?.access_level == 2 ? '' : 'none'
                                 }}

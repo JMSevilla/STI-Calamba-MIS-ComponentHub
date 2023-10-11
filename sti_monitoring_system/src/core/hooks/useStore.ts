@@ -13,3 +13,4 @@ export const useParticipantAccessToken = () => useLocalStorage<string | undefine
 export const useRoom = () => useLocalStorage<any>('RM', undefined)
 export const useCurrentScreen = () => useLocalStorage<string | undefined>('CS', undefined)
 export const useWarningOrUnauthorizedModal = () => useLocalStorage<boolean>('_md', false)
+export const useDoneGuide = () => useLocalStorage<boolean>('GD', false)

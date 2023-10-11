@@ -292,4 +292,16 @@ export class InternalRequestAPI {
     public disableAccountWatcher(accountId: number) {
         return this.axios.get(`/v1/accountsservice/watch-disabled-account/${accountId}`)
     }
+    public accountProfileDetails(accountId: any) {
+        return this.axios.get(`/v1/accountsservice/get-account-details/${accountId}`)
+    }
+    public getAccountsLogger(accountId: any) {
+        return this.axios.get(`/v1/accountsservice/get-actions-logger/${accountId}`)
+    }
+    public removeRoom(room_id: string) {
+        return this.axios.delete(`/v1/meetingroomservice/remove-room/${room_id}`)
+    }
+    public detectNewAccount(id: number) {
+        return this.axios.get(`/v1/accountsservice/detect-new-account/${id}`)
+    }
 }

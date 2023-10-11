@@ -26,8 +26,11 @@ const CourseDetailsForm = () => {
         async (api, acronym: string | undefined | null) => await api.internal.courseListByAcronym(acronym)
     )
     const {
-        control
+        control, getValues,
+        watch
     } = useFormContext<CourseNumberInfer>()
+    const values = getValues()
+    const courseId = watch('course_id')
     function extractCourseCode(providedSection: string | undefined): string | undefined | null {
         const regex = /^[A-Z]+/;
         const match = regex.exec(providedSection ?? 'BSCS');
@@ -41,6 +44,7 @@ const CourseDetailsForm = () => {
                 setCourses(res.data)
             })
         }
+        console.log(extractCourseCode(section_name?.sectionName))
         findCoursesInAcronyms()
     }, [])
     return (
@@ -69,12 +73,16 @@ export const CourseDetails = () => {
         handleSubmit,
         formState: { isValid }
     } = form;
-    const { next } = useActiveSteps(MAX_SECTION_STEPS)
+    const { next, previous} = useActiveSteps(MAX_SECTION_STEPS)
     const handleContinue = () => {
         handleSubmit(
             (values) => {
-                setCourseDetails(values)
-                next()
+                if(values.course_id !== undefined) {
+                    setCourseDetails(values)
+                    next()
+                } else {
+                    previous()
+                 }
             }
         )()
         return false
@@ -86,13 +94,7 @@ export const CourseDetails = () => {
                                         <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
                 Step 2 : Course Details
               </h2>
-              {
-                AlertMessagePlacement({
-                    type: 'info',
-                    title: 'Section Naming',
-                    message: "Kindly provide the proper naming for the section (e.g., BSIT 101, BSTM 201)."
-                })
-            }
+              
             <CourseDetailsForm />
             <BottomButtonGroup 
                 max_array_length={MAX_SECTION_STEPS}

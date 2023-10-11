@@ -15,8 +15,12 @@ const DashboardLayout: React.FC = () => {
     } = useAuthContext()
     const [references, setReferences] = useReferences()
     const [accountDisabled, setAccountDisabled] = useState(false)
+    const [accountNotVerified, setAccountNotVerified] = useState(false)
     const apiWatchDisabledAccount = useApiCallback(
         async (api, accountId: number) => await api.internal.disableAccountWatcher(accountId)
+    )
+    const apiWatchAccountNotVerified = useApiCallback(
+        async (api, accountId: number) => await api.auth.detectAccountIsNotVerified(accountId)
     )
     const {
         ToastMessage
@@ -32,9 +36,21 @@ const DashboardLayout: React.FC = () => {
             }
         })
     }
+    function watchAccountNotVerified(){
+        apiWatchAccountNotVerified.execute(references?.id)
+        .then(res => {
+            if(res.data) {
+                logout()
+                setAccountNotVerified(res.data)
+            } else {
+                setAccountNotVerified(false)
+            }
+        })
+    }
     useEffect(() => {
         watchDisabledAccount()
-    }, [accountDisabled])
+        watchAccountNotVerified()
+    }, [accountDisabled, accountNotVerified])
     return (
         <div className="dark:bg-boxdark-2 dark:text-bodydark">
             <div className="flex h-screen overflow-hidden">

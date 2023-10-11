@@ -8,7 +8,6 @@ const studentBaseSchema = z.object({
     email: requiredString('Your email is required.').email(),
     username: requiredString('Your username is required.'),
     password: requiredString('Your password is required.'),
-    conpassword: requiredString('Please confirm your password.'),
     mobileNumber: requiredString('Kindly provide your mobile number'),
     section: requiredString('Kindly select section'),
     course_id: requiredString('Kindly select course'),
@@ -23,11 +22,6 @@ export const studentSubSchema = z.discriminatedUnion('hasNoMiddleName', [
         hasNoMiddleName: z.literal(true),
         middleName: z.string().optional()
     }).merge(studentBaseSchema)
-]).refine(
-    ({ password, conpassword }) => {
-       return password === conpassword
-    },
-    { path: ['conpassword'], message: 'Password did not match' }
-)
+])
 
 export type StudentCreation = z.infer<typeof studentSubSchema>

@@ -110,7 +110,7 @@ const coreRoutes: CoreRoutesProps[] = [
                 path: '/dashboard/admin/add',
                 component: AddNewModerator,
                 access: 1,
-                subMenuTitle: 'Add Moderator'
+                subMenuTitle: 'Accounts Management'
             }
         ],
         svg: UAMSvg()
@@ -347,6 +347,15 @@ const coreRoutes: CoreRoutesProps[] = [
         customSubs: [],
         isHidden: true,
         component: Profile
+    },
+    {
+        path: '/dashboard/moderator/profile-details',
+        title: 'Profile Details',
+        access: 2,
+        hasSubMenus: false,
+        customSubs: [],
+        isHidden: true,
+        component: ProfileDetails
     },
     /**
      * Student Dashboard area below
