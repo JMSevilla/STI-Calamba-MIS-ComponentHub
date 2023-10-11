@@ -54,7 +54,7 @@ const ResendButton: React.FC<{
     )
 }
 
-const FormattedTime: React.FC<{seconds: number}> = ({ seconds: remainingSeconds }) => {
+const FormattedTime: React.FC<{seconds: number, hideCanResend: boolean}> = ({ seconds: remainingSeconds, hideCanResend = false }) => {
     const minutes = Math.floor(remainingSeconds / 60)
     const seconds = `${remainingSeconds % 60}`.padStart(2, '0')
 
@@ -63,14 +63,14 @@ const FormattedTime: React.FC<{seconds: number}> = ({ seconds: remainingSeconds 
 
     return (
         <FormHelperText sx={{ fontWeight: 560, color: (theme) => theme.palette.grey[500] }}>
-            {!canResend ? `Resend Code: ${formatted}` : "Didn't receive the code?"}
+            {!canResend ? `Resend Code: ${formatted}` : !hideCanResend && "Didn't receive the code?"}
         </FormHelperText>
     )
 }
 
 export const HelperText: React.FC<
-    Pick<Props, 'onResend' | 'error' | 'helperText'> & { seconds : number }
-> = ({ onResend, seconds: remainingSeconds, helperText, error }) => {
+    Pick<Props, 'onResend' | 'error' | 'helperText'> & { seconds : number, hideCanResend: boolean }
+> = ({ onResend, seconds: remainingSeconds, helperText, error, hideCanResend = false }) => {
     const canResend = remainingSeconds <= 0;
 
     return (
@@ -78,14 +78,14 @@ export const HelperText: React.FC<
             {helperText ? (
                 <FormHelperText error={error}>{helperText}</FormHelperText>
             ): (
-                <FormattedTime seconds={remainingSeconds} />
+                <FormattedTime seconds={remainingSeconds} hideCanResend={hideCanResend} />
             )}
-            {canResend && <ResendButton onClick={onResend} />}
+            {!hideCanResend && canResend && <ResendButton onClick={onResend} />}
         </Stack>
     )
 }
 
-export const OtpField: React.FC<Props> = ({
+export const OtpField: React.FC<Props & { hideCanResend: boolean }> = ({
     error,
     digits = OTP_DIGIT_COUNT,
     value,
@@ -99,6 +99,7 @@ export const OtpField: React.FC<Props> = ({
     sx,
     inputProps,
     noLabel = false,
+    hideCanResend = false,
     ...rest
 }) => {
     const [pin, setPin] = useState<string[]>([])
@@ -203,6 +204,7 @@ export const OtpField: React.FC<Props> = ({
                             helperText={helperText}
                             onResend={onResend}
                             seconds={resendRemainingTime}
+                            hideCanResend={hideCanResend}
                         />
                     )}
                 </Stack>
@@ -210,7 +212,7 @@ export const OtpField: React.FC<Props> = ({
         )
 }
 
-type ControlledOtpFieldProps<T extends FieldValues> = ControlledField<T> & Props;
+type ControlledOtpFieldProps<T extends FieldValues> = ControlledField<T> & Props & { hideCanResend: boolean };
 
 export function ControlledOtpField<T extends FieldValues>({
     control,

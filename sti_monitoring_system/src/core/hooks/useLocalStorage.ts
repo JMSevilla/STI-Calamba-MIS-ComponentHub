@@ -1,9 +1,7 @@
-export type SetValue<T> = (value: T | ((storedValue: T) => T)) => void;
-
 import { useCallback } from "react";
 import { clear, getItem, removeItem, setItem } from "../local-storage";
-
-export function useSessionStorage<T>(
+export type SetValue<T> = (value: T | ((storedValue: T) => T)) => void;
+export function useLocalStorage<T>(
   key: string,
   initialValue: T
 ): [T, SetValue<T>, () => void] {

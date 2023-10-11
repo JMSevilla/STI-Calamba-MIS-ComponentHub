@@ -37,7 +37,7 @@ const customMenu = Menu.buildFromTemplate([
     }
 ])
 
-// Menu.setApplicationMenu(customMenu)
+// Menu.setApplicationMenu(null)
 
 
 app.whenReady().then(createMainWindow)
