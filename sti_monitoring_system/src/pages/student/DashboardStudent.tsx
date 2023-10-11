@@ -5,7 +5,7 @@ import { useLoaders } from '../../core/context/LoadingContext'
 import LoadBackdrop from '../../components/Backdrop/Backdrop'
 import { Button, Chip, Container, Grid, Typography } from '@mui/material'
 import BaseCard from '../../components/Card/Card'
-import { useParticipantAccessToken, useReferences } from '../../core/hooks/useStore'
+import { useDoneGuide, useParticipantAccessToken, useReferences } from '../../core/hooks/useStore'
 import { GraduationSvg } from '../../components/TextField/icon/svgs/graduation'
 import { JitsiServerProps, MeetRoomJoinedProps, MeetingActionsLogger } from '../../core/types'
 import { useApiCallback } from '../../core/hooks/useApi'
@@ -16,6 +16,9 @@ import { NormalButton } from '../../components/Buttons/NormalButton'
 import { ProjectTable } from '../../components/DataGrid/ProjectTable'
 import { useQuery } from 'react-query'
 import { useRefreshTokenHandler } from '../../core/hooks/useRefreshTokenHandler'
+import { AlertMessagePlacement } from '../../core/utils/alert-placement'
+import { studentSteps } from '../../core/utils/student-guide'
+import Tour from 'reactour'
 
 const DashboardStudent = () => { //might be dynamic based on DB
     const { preload, setPreLoad, gridLoad, setGridLoad, loading, setLoading } = useLoaders()
@@ -23,6 +26,11 @@ const DashboardStudent = () => { //might be dynamic based on DB
     const [privateRoom, setPrivateRoom] = useState(false)
     const [violationModal, setViolationModal] = useState(false)
     const [PTAccessToken, setPTAccessToken] = useParticipantAccessToken()
+    const [storeGuide, setStoreGuide] = useDoneGuide()
+    const [newAccountDetected, setNewAccountDetected] = useState(false)
+    const apiDetectNewAccount = useApiCallback(
+      async (api, id: number) => await api.internal.detectNewAccount(id)
+    )
     const [roomDetails, setRoomDetails] = useState({
       room_name: '',
       comlabId: '',
@@ -41,13 +49,13 @@ const DashboardStudent = () => { //might be dynamic based on DB
       async (api, args: JitsiServerProps) =>
       await api.auth.jwtJitsiParticipantsRequest(args)
   )
-  const apiJoinedParticipantsLogs = useApiCallback(
-    async (api, args: MeetRoomJoinedProps) => await api.internal.joinedParticipantsLogs(args) 
-)
-const apiGetAllRooms = useApiCallback(
-  async (api, sectionId: number) => 
-  await api.internal.getAllRooms(sectionId)
-)
+    const apiJoinedParticipantsLogs = useApiCallback(
+        async (api, args: MeetRoomJoinedProps) => await api.internal.joinedParticipantsLogs(args) 
+    )
+    const apiGetAllRooms = useApiCallback(
+      async (api, sectionId: number) => 
+      await api.internal.getAllRooms(sectionId)
+    )
     function initializedJoinRoom(room_name: string | undefined, room_id: string | undefined, comlabId: string | undefined,
       room_type: string | undefined) {
       const jitsiObj: JitsiServerProps = {
@@ -264,6 +272,21 @@ const apiGetAllRooms = useApiCallback(
   useEffect(() => {
     setGridLoad(false)
   }, [data])
+  function DetectionOfNewAccount(){
+    apiDetectNewAccount.execute(references?.id)
+    .then(res => {
+      if(res.data) {
+        setNewAccountDetected(res.data)
+        setStoreGuide(res.data)
+      } else {
+        setNewAccountDetected(false)
+        setStoreGuide(false)
+      }
+    })
+  }
+  useEffect(() => {
+    DetectionOfNewAccount()
+  }, [newAccountDetected])
     return (
         <>
             {
@@ -271,6 +294,23 @@ const apiGetAllRooms = useApiCallback(
                     <LoadBackdrop open={preload} />
                 ) : (
                     <Container>
+                       <div style={{ marginBottom: '20px'}}>
+                    {
+                        newAccountDetected &&
+                        AlertMessagePlacement({
+                          type: 'warning',
+                          title: 'Welcome to your new account!',
+                          message: "For your security, we recommend changing your password as soon as possible. This will help ensure the safety of your account."
+                      })
+                    }
+                   </div>
+                   <Tour 
+                      isOpen={storeGuide}
+                      steps={studentSteps}
+                      onRequestClose={() => {
+                        setStoreGuide(false)
+                      }}
+                   />
                       <BaseCard elevation={5} style={{ padding: '20px' }}>
                         <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
                           <Grid item xs={6}>
@@ -292,9 +332,11 @@ const apiGetAllRooms = useApiCallback(
                                 border: '1px solid #DBCCCB',
                                 mr: 1
                               }}
+                              className='initial-student-guide-view-classroom-button'
                               onClick={handleClickViewClassrooms}
                               >View Classroms</Button>
-                              <Button onClick={handleClickViewAttendance} variant='contained' size='small'>View my attendance</Button>
+                              <Button onClick={handleClickViewAttendance} 
+                              className='initial-student-guide-view-attendance-button' variant='contained' size='small'>View my attendance</Button>
                             </div>
                           </Grid>
                         </Grid>
@@ -304,7 +346,7 @@ const apiGetAllRooms = useApiCallback(
                           </Grid>
                         </Grid>
                       </BaseCard>
-                      <BaseCard style={{ marginTop: '20px'}}>
+                      <BaseCard className='initial-student-guide' style={{ marginTop: '20px'}}>
                         {memoizedClassrooms}
                       </BaseCard>
                     </Container>

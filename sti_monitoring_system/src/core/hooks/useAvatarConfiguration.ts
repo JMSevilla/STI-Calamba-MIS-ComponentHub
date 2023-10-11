@@ -35,10 +35,19 @@ export const useAvatarConfiguration = () => {
             children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
         };
     }
-
+    function stringAvatarTicketDetails(name: string) {
+        return {
+            sx: {
+            bgcolor: stringToColor(name),
+            width: 30, height: 30
+            },
+            children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
+        };
+    }
     return {
         stringToColor,
         stringAvatar,
-        stringAvatarColumns
+        stringAvatarColumns,
+        stringAvatarTicketDetails
     }
 }

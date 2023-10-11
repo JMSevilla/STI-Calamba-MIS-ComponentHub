@@ -79,6 +79,7 @@ export const Sidebar = ({sidebarOpen, setSidebarOpen}: SidebarProps) => {
         apifindproductivity.execute(references?.id)
         .then((res: AxiosResponse | undefined) => {
             res?.data?.length > 0 && res?.data?.map((ti: any) => {
+                console.log(ti)
                 const parsedTime = moment(ti.timeIn, "HH:mm:ss.SSSSSSS")
                 const formattedTime = parsedTime.format('hh:mm A')
                 setTime(formattedTime)

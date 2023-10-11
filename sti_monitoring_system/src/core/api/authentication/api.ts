@@ -57,4 +57,7 @@ export class AuthenticationRequestAPI {
     }){
         return this.axios.post('/v1/accountsservice/change-password-fp', props)
     }
+    public detectAccountIsNotVerified(accountId: number | undefined) {
+        return this.axios.get(`/v1/accountsservice/detect-account-unverified/${accountId}`)
+    }
 }

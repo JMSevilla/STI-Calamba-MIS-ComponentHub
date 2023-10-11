@@ -16,6 +16,7 @@ import { MAX_SECTION_STEPS } from ".";
 import { BottomButtonGroup } from "../../Buttons/BottomButtonGroup";
 import { useEffect } from 'react'
 import { AxiosResponse } from 'axios'
+import { AlertMessagePlacement } from "../../../core/utils/alert-placement";
 
 const SectionNameForm = () => {
     const {
@@ -87,6 +88,13 @@ export const SectionName = () => {
                                         <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
                 Step 1 : Basic Section Details
               </h2>
+              {
+                AlertMessagePlacement({
+                    type: 'info',
+                    title: 'Section Naming',
+                    message: "Kindly provide the proper naming for the section (e.g., BSIT 101, BSTM 201)."
+                })
+            }
             <SectionNameForm />
             <BottomButtonGroup 
                 max_array_length={MAX_SECTION_STEPS}

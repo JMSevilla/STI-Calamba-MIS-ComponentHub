@@ -21,7 +21,7 @@ export const BaseCourseSchema = z.object({
 })
 
 export const BaseCourseDetails = z.object({
-    course_id: z.any().optional()
+    course_id: z.any()
 })
 
 export type CourseNumberInfer = z.infer<typeof BaseCourseDetails>
